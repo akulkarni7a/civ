@@ -1,0 +1,130 @@
+name: Validate Move
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tribes/**/strategy.py'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Determine tribe from changed files
+        id: detect-tribe
+        run: |
+          # Get the tribe from the changed file path
+          CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
+          echo "Changed files: $CHANGED_FILES"
+
+          TRIBE=""
+          if echo "$CHANGED_FILES" | grep -q "tribes/red/"; then
+            TRIBE="RED"
+          elif echo "$CHANGED_FILES" | grep -q "tribes/blue/"; then
+            TRIBE="BLUE"
+          elif echo "$CHANGED_FILES" | grep -q "tribes/green/"; then
+            TRIBE="GREEN"
+          elif echo "$CHANGED_FILES" | grep -q "tribes/yellow/"; then
+            TRIBE="YELLOW"
+          fi
+
+          echo "tribe=$TRIBE" >> $GITHUB_OUTPUT
+          echo "Detected tribe: $TRIBE"
+
+      - name: Validate move
+        id: validate
+        if: steps.detect-tribe.outputs.tribe != ''
+        working-directory: engine
+        run: |
+          python main.py validate \
+            --state ../data/gamestate.json \
+            --tribe ${{ steps.detect-tribe.outputs.tribe }} \
+            2>&1 | tee validation_output.txt
+
+          # Capture exit code
+          exit_code=${PIPESTATUS[0]}
+          echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+
+          # Read output for comment
+          OUTPUT=$(cat validation_output.txt)
+          echo "output<<EOF" >> $GITHUB_OUTPUT
+          echo "$OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Generate preview diff
+        if: steps.validate.outputs.exit_code == '0'
+        working-directory: engine
+        run: |
+          # Run the turn to generate diff.json (without saving)
+          python main.py run \
+            --state ../data/gamestate.json \
+            --tribe ${{ steps.detect-tribe.outputs.tribe }} \
+            --output ../diff.json \
+            --dry-run || true
+
+      - name: Comment on PR - Success
+        if: steps.validate.outputs.exit_code == '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `${{ steps.validate.outputs.output }}`;
+            const tribe = '${{ steps.detect-tribe.outputs.tribe }}';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ✅ Move Validated for ${tribe} Tribe
+
+            \`\`\`
+            ${output}
+            \`\`\`
+
+            The move is valid and ready to be merged. Once merged, the game state will be updated.
+
+            🎮 [View Game](https://your-game-url.vercel.app)`
+            });
+
+      - name: Comment on PR - Failure
+        if: steps.validate.outputs.exit_code != '0' && steps.validate.outputs.exit_code != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `${{ steps.validate.outputs.output }}`;
+            const tribe = '${{ steps.detect-tribe.outputs.tribe }}';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ❌ Invalid Move for ${tribe} Tribe
+
+            \`\`\`
+            ${output}
+            \`\`\`
+
+            Please fix the issues above and push a new commit.
+
+            ### Common Issues:
+            - Syntax errors in strategy.py
+            - Invalid action format
+            - Moving to an invalid position
+            - Not your turn
+            - Insufficient resources`
+            });
+
+      - name: Fail if validation failed
+        if: steps.validate.outputs.exit_code != '0' && steps.validate.outputs.exit_code != ''
+        run: exit 1
