@@ -1,0 +1,15 @@
+{
+  "github": {
+    "owner": "akulkarni7a",
+    "repo": "civ"
+  },
+  "jules": {
+    "autoMerge": true,
+    "requireApproval": false,
+    "timeout": 300
+  },
+  "game": {
+    "turnTimeout": 600,
+    "maxTurns": 100
+  }
+}

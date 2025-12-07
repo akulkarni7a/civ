@@ -36,7 +36,7 @@ class JulesSession:
 class JulesClient:
     """Client for interacting with the Jules API."""
 
-    BASE_URL = "https://julius.googleapis.com/v1alpha"
+    BASE_URL = "https://jules.googleapis.com/v1alpha"
 
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.environ.get("JULES_KEY")

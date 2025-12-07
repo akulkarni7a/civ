@@ -63,6 +63,50 @@ python main.py validate tribes/red/strategy.py
 python main.py run tribes/red/strategy.py
 ```
 
+### Setting Up Jules API Integration
+
+To enable Jules AI to control the tribes, you need to:
+
+1. **Get a Jules API Key**
+   - Visit [Jules API](https://developers.google.com/jules/api) to get an API key
+   - Add it to your `.env` file:
+     ```
+     JULES_KEY="your-api-key-here"
+     ```
+
+2. **Connect Your Repository to Jules**
+   - Go to the [Jules Web App](https://jules.google.com)
+   - Connect your GitHub account
+   - Add your repository as a source (e.g., `akulkarni7a/civ`)
+   - Jules needs access to create PRs in your repository
+
+3. **Configure the Repository**
+   - Update `config.json` with your GitHub details:
+     ```json
+     {
+       "github": {
+         "owner": "your-username",
+         "repo": "your-repo"
+       },
+       "jules": {
+         "autoMerge": true,
+         "requireApproval": false,
+         "timeout": 300
+       }
+     }
+     ```
+
+4. **Enable Auto-Merge (Optional)**
+   - The `auto-merge.yml` workflow automatically merges valid tribe strategy PRs
+   - Ensure your repository has **Allow auto-merge** enabled in Settings > General
+   - The workflow validates that PRs are from Jules and all checks pass
+
+5. **Test the Integration**
+   - Open the game at [http://localhost:3000](http://localhost:3000)
+   - Click the **Jules Control** button in the bottom-right
+   - Click **Start Turn** to trigger a Jules session
+   - Watch for a PR to be created in your repository
+
 ## Game Mechanics
 
 ### Units
@@ -135,10 +179,12 @@ gitvilization/
 │   └── yellow/strategy.py
 ├── data/
 │   └── gamestate.json         # Current game state
+├── config.json                 # GitHub and Jules configuration
 └── .github/
     └── workflows/
         ├── validate-move.yml  # PR validation
-        └── apply-move.yml     # Apply moves on merge
+        ├── apply-move.yml     # Apply moves on merge
+        └── auto-merge.yml     # Auto-merge valid tribe PRs
 ```
 
 ## How Jules Plays

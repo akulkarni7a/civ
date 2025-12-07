@@ -374,6 +374,26 @@ class JulesOrchestrator:
             }
 
 
+def load_config(config_path: str = None) -> dict:
+    """Load configuration from config.json."""
+    if config_path is None:
+        # Try project root first, then current directory
+        for path in ["../config.json", "config.json", "./config.json"]:
+            if os.path.exists(path):
+                config_path = path
+                break
+
+    if config_path and os.path.exists(config_path):
+        with open(config_path, "r") as f:
+            return json.load(f)
+
+    # Return defaults if no config found
+    return {
+        "github": {"owner": "example", "repo": "gitvilization"},
+        "jules": {"autoMerge": True, "requireApproval": False, "timeout": 300},
+    }
+
+
 # CLI interface
 if __name__ == "__main__":
     import argparse
@@ -381,12 +401,17 @@ if __name__ == "__main__":
 
     load_dotenv()
 
+    # Load config
+    config = load_config()
+    github_config = config.get("github", {})
+    jules_config = config.get("jules", {})
+
     parser = argparse.ArgumentParser(description="Jules Orchestrator for Git-vilization")
     parser.add_argument("command", choices=["status", "start", "check", "complete", "run"])
-    parser.add_argument("--owner", default="example", help="GitHub owner")
-    parser.add_argument("--repo", default="gitvilization", help="GitHub repo")
+    parser.add_argument("--owner", default=github_config.get("owner", "example"), help="GitHub owner")
+    parser.add_argument("--repo", default=github_config.get("repo", "gitvilization"), help="GitHub repo")
     parser.add_argument("--state", default="data/gamestate.json", help="Game state path")
-    parser.add_argument("--timeout", type=int, default=300, help="Timeout for run command")
+    parser.add_argument("--timeout", type=int, default=jules_config.get("timeout", 300), help="Timeout for run command")
 
     args = parser.parse_args()
 

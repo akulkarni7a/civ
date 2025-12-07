@@ -105,6 +105,8 @@
 - [x] Create JulesControl UI component
 - [x] Create system prompt templates for tribes
 - [x] Implement turn rotation logic
+- [x] Auto-merge GitHub Action for tribe PRs
+- [x] Config-based repository settings (config.json)
 - [ ] Add webhook for PR merge notifications
 - [ ] Error handling and retry mechanism
 
