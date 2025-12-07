@@ -18,10 +18,20 @@ from validate import MoveValidator
 
 def load_strategy(tribe: TribeColor) -> Optional[callable]:
     """Load a tribe's strategy module and return the get_action function."""
-    strategy_path = Path(f"tribes/{tribe.value.lower()}/strategy.py")
+    # Try both relative paths (from engine/ and from project root)
+    paths_to_try = [
+        Path(f"../tribes/{tribe.value.lower()}/strategy.py"),  # From engine/
+        Path(f"tribes/{tribe.value.lower()}/strategy.py"),     # From project root
+    ]
 
-    if not strategy_path.exists():
-        print(f"Error: Strategy file not found: {strategy_path}")
+    strategy_path = None
+    for path in paths_to_try:
+        if path.exists():
+            strategy_path = path
+            break
+
+    if not strategy_path:
+        print(f"Error: Strategy file not found. Tried: {', '.join(str(p) for p in paths_to_try)}")
         return None
 
     try:
