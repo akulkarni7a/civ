@@ -1,7 +1,7 @@
 {
   "gameId": "game_001",
   "turn": 1,
-  "currentTribe": "RED",
+  "currentTribe": "BLUE",
   "status": "IN_PROGRESS",
   "map": {
     "width": 20,
@@ -2411,7 +2411,7 @@
   },
   "tribes": {
     "RED": {
-      "gold": 100,
+      "gold": 75,
       "alive": true
     },
     "BLUE": {
@@ -2465,6 +2465,16 @@
       "position": [
         18,
         19
+      ],
+      "canAct": false
+    },
+    {
+      "id": 5,
+      "tribe": "RED",
+      "type": "WORKER",
+      "position": [
+        0,
+        0
       ],
       "canAct": false
     }
@@ -2577,5 +2587,16 @@
       "workerId": null
     }
   ],
-  "history": []
+  "history": [
+    {
+      "turn": 1,
+      "tribe": "RED",
+      "action": "TRAIN",
+      "details": {
+        "action": "TRAIN",
+        "unit_type": "WORKER",
+        "building_id": 1
+      }
+    }
+  ]
 }

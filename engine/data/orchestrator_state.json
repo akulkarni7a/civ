@@ -1,0 +1,15 @@
+{
+  "current_turn": null,
+  "completed_turns": [
+    {
+      "tribe": "RED",
+      "session_id": "14121356508477970518",
+      "pr_url": "https://github.com/akulkarni7a/civ/pull/2",
+      "started_at": null,
+      "completed_at": 1765072818.7924569
+    }
+  ],
+  "is_running": false,
+  "github_repo": "civ",
+  "github_owner": "akulkarni7a"
+}
