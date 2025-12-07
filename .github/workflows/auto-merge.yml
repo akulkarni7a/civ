@@ -47,13 +47,14 @@ jobs:
           if echo "$FILES" | grep -q "tribes/.*/strategy.py"; then
             echo "PR modifies tribe strategies, checking for auto-merge"
 
-            # Check if the PR title indicates it's from Jules (tribe strategy)
+            # Check if the PR title indicates it's a tribe strategy PR
             TITLE=$(gh pr view $PR_NUMBER --json title -q .title)
-            if echo "$TITLE" | grep -qE "^\[(RED|BLUE|GREEN|YELLOW)\]"; then
-              echo "PR is from Jules AI, enabling auto-merge"
+            # Accept: [RED], [BLUE], or titles with "RED Tribe", "BLUE Tribe", etc.
+            if echo "$TITLE" | grep -qE "(\[(RED|BLUE|GREEN|YELLOW)\]|(RED|BLUE|GREEN|YELLOW) Tribe)"; then
+              echo "PR is a tribe strategy PR, enabling auto-merge"
               echo "should_merge=true" >> $GITHUB_OUTPUT
             else
-              echo "PR is not from Jules, skipping auto-merge"
+              echo "PR title doesn't match tribe pattern: $TITLE"
               echo "should_merge=false" >> $GITHUB_OUTPUT
             fi
           else
