@@ -77,11 +77,11 @@ jobs:
           ATTEMPT=0
 
           while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-            CHECKS=$(gh pr checks $PR_NUMBER --json state 2>/dev/null || echo "")
+            CHECKS=$(gh pr checks $PR_NUMBER --json state,name 2>/dev/null || echo "")
 
-            # Check if all checks passed
-            FAILED=$(echo "$CHECKS" | jq '[.[] | select(.state == "FAILURE")] | length' 2>/dev/null || echo "0")
-            PENDING=$(echo "$CHECKS" | jq '[.[] | select(.state == "PENDING" or .state == "QUEUED" or .state == "IN_PROGRESS")] | length' 2>/dev/null || echo "0")
+            # Check if all checks passed (excluding auto-merge workflow itself to avoid circular wait)
+            FAILED=$(echo "$CHECKS" | jq '[.[] | select(.name != "auto-merge" and .state == "FAILURE")] | length' 2>/dev/null || echo "0")
+            PENDING=$(echo "$CHECKS" | jq '[.[] | select(.name != "auto-merge" and (.state == "PENDING" or .state == "QUEUED" or .state == "IN_PROGRESS"))] | length' 2>/dev/null || echo "0")
 
             if [ "$FAILED" -gt 0 ]; then
               echo "Some checks failed, cannot auto-merge"
