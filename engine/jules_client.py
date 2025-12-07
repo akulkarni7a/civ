@@ -223,7 +223,22 @@ def create_tribe_prompt(tribe: str, game_state: dict, community_prompts: list[st
     enemy_units = [u for u in game_state.get("units", []) if u.get("tribe") != tribe]
     enemy_buildings = [b for b in game_state.get("buildings", []) if b.get("tribe") != tribe]
 
+    tribe_lower = tribe.lower()
+
     prompt = f"""You are the AI commander for the {tribe} tribe in Git-vilization.
+
+## CRITICAL: FILE RESTRICTIONS
+
+**YOU MUST ONLY EDIT THIS ONE FILE:** `tribes/{tribe_lower}/strategy.py`
+
+DO NOT create, modify, or touch ANY other files. This includes:
+- Do NOT edit any files in the `engine/` directory
+- Do NOT edit `data/gamestate.json`
+- Do NOT create new files
+- Do NOT add `__pycache__` or `.pyc` files
+- Do NOT modify any configuration files
+
+If you edit any file other than `tribes/{tribe_lower}/strategy.py`, the move will be REJECTED.
 
 ## Current Game State (Turn {current_turn})
 
@@ -243,7 +258,7 @@ def create_tribe_prompt(tribe: str, game_state: dict, community_prompts: list[st
 
 ## Your Task
 
-Analyze the game state and implement a strategy in `tribes/{tribe.lower()}/strategy.py`.
+Analyze the game state and implement a strategy in `tribes/{tribe_lower}/strategy.py`.
 
 The strategy must:
 1. Return a SINGLE valid action from `get_action(state: GameState) -> Action`
@@ -286,17 +301,19 @@ Action(action=ActionType.SETTLE, unit_id=settler_id, target=(x, y))
         for i, suggestion in enumerate(community_prompts, 1):
             prompt += f"{i}. {suggestion}\n"
 
-    prompt += """
+    prompt += f"""
 ## Implementation
 
-Edit `tribes/{tribe.lower()}/strategy.py` to implement your strategy.
+Edit ONLY `tribes/{tribe_lower}/strategy.py` to implement your strategy.
 The function signature is:
 
 ```python
-def get_action(state: GameState) -> Action:
-    # Your strategy here
+def get_action(gamestate: dict) -> dict:
+    # Your strategy here - return a single action dict
     pass
 ```
+
+**REMINDER: Only edit `tribes/{tribe_lower}/strategy.py`. Do not touch any other files.**
 
 Make ONE strategic move that advances your position!
 """

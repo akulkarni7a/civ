@@ -1,0 +1,24 @@
+{
+  "action": {
+    "action": "TRAIN",
+    "unit_type": "WORKER",
+    "building_id": 1
+  },
+  "changes": [
+    {
+      "type": "unit_trained",
+      "unit_id": 5,
+      "unit_type": "WORKER",
+      "position": [
+        0,
+        0
+      ],
+      "tribe": "RED"
+    },
+    {
+      "type": "turn_advanced",
+      "turn": 1,
+      "current_tribe": "BLUE"
+    }
+  ]
+}

@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Determine tribe from changed files
+      - name: Determine tribe and validate files
         id: detect-tribe
         uses: actions/github-script@v7
         with:
@@ -38,6 +38,24 @@ jobs:
 
             const changedFiles = files.map(f => f.filename);
             console.log('Changed files:', changedFiles);
+
+            // Check for invalid file changes
+            const invalidFiles = changedFiles.filter(f => {
+              // Only allow strategy.py files in tribes directories
+              if (f.match(/^tribes\/(red|blue|green|yellow)\/strategy\.py$/)) {
+                return false; // This is allowed
+              }
+              // Everything else is invalid
+              return true;
+            });
+
+            if (invalidFiles.length > 0) {
+              console.log('Invalid files detected:', invalidFiles);
+              core.setOutput('invalid_files', invalidFiles.join(', '));
+              core.setOutput('has_invalid_files', 'true');
+            } else {
+              core.setOutput('has_invalid_files', 'false');
+            }
 
             let tribe = '';
             for (const file of changedFiles) {
@@ -59,9 +77,38 @@ jobs:
             console.log('Detected tribe:', tribe);
             core.setOutput('tribe', tribe);
 
+      - name: Reject invalid file changes
+        if: steps.detect-tribe.outputs.has_invalid_files == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const invalidFiles = '${{ steps.detect-tribe.outputs.invalid_files }}';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ❌ Invalid File Changes Detected
+
+This PR modifies files that are not allowed:
+
+\`\`\`
+${invalidFiles}
+\`\`\`
+
+**Only \`tribes/{tribe}/strategy.py\` files can be modified.**
+
+Please remove all other file changes and try again. Common issues:
+- \`__pycache__\` files should not be committed
+- Engine files should not be modified
+- Game state files should not be modified`
+            });
+
+            core.setFailed('PR contains invalid file changes: ' + invalidFiles);
+
       - name: Validate move
         id: validate
-        if: steps.detect-tribe.outputs.tribe != ''
+        if: steps.detect-tribe.outputs.tribe != '' && steps.detect-tribe.outputs.has_invalid_files != 'true'
         working-directory: engine
         run: |
           python main.py validate \
